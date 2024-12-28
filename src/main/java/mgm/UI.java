@@ -697,7 +697,7 @@ public class UI {
 
     private void openBlocksWindow() {
         JFrame blocksWindow = new JFrame("Manage Blocks");
-        blocksWindow.setSize(400, 600);
+        blocksWindow.setSize(600, 1000);
         blocksWindow.setLocationRelativeTo(null); // Center the window
         blocksWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -705,11 +705,19 @@ public class UI {
         JPanel blocksPanel = new JPanel();
         blocksPanel.setLayout(new BoxLayout(blocksPanel, BoxLayout.Y_AXIS));
 
-        // Create a panel for the search field
+        // Create a panel for the search field and buttons
         JPanel searchPanel = new JPanel();
         JTextField searchField = new JTextField();
-        searchField.setPreferredSize(new Dimension(350, 30));
-        searchField.setMaximumSize(new Dimension(350, 30));
+        searchField.setPreferredSize(new Dimension(200, 30));
+        searchField.setMaximumSize(new Dimension(200, 30));
+
+        // Add "Turn All On" button
+        JButton turnAllOnButton = new JButton("Turn All On");
+        turnAllOnButton.addActionListener(e -> toggleAllBlocks(true, searchField.getText().trim(), blocksPanel));
+
+        // Add "Turn All Off" button
+        JButton turnAllOffButton = new JButton("Turn All Off");
+        turnAllOffButton.addActionListener(e -> toggleAllBlocks(false, searchField.getText().trim(), blocksPanel));
 
         // Add listener to update block list based on search text
         searchField.getDocument().addDocumentListener(new DocumentListener() {
@@ -729,8 +737,12 @@ public class UI {
             }
         });
 
-        // Add the search field to its own panel
+        // Add components to the search panel
         searchPanel.add(searchField);
+        searchPanel.add(turnAllOnButton);
+        searchPanel.add(turnAllOffButton);
+
+        // Add the search panel to the main blocks panel
         blocksPanel.add(searchPanel);
 
         // Create a scrollable container for the block list (initially with all blocks)
@@ -749,6 +761,48 @@ public class UI {
 
         blocksWindow.add(blocksPanel);
         blocksWindow.setVisible(true);
+    }
+
+    private void toggleAllBlocks(boolean state, String query, JPanel blocksPanel) {
+        // Update the underlying data in blockGradientGenerator.allBlocks
+        for (ImageInfo block : blockGradientGenerator.allBlocks) {
+            if (query.isEmpty() || block.name.toLowerCase().contains(query.toLowerCase())) {
+                block.allowed = state;
+            }
+        }
+
+        // Get the JScrollPane that contains the block list panel
+        JScrollPane scrollPane = (JScrollPane) blocksPanel.getComponent(1);
+        JPanel blockListPanel = (JPanel) scrollPane.getViewport().getView();
+
+        // Update the visible checkboxes to match the new state
+        for (Component component : blockListPanel.getComponents()) {
+            if (component instanceof JPanel blockPanel) {
+                JCheckBox checkBox = findCheckBox(blockPanel);
+                if (checkBox != null) {
+                    String blockName = checkBox.getText();
+                    if (query.isEmpty() || blockName.toLowerCase().contains(query.toLowerCase())) {
+                        checkBox.setSelected(state);
+                    }
+                }
+            }
+        }
+
+        filterBlocks(query, blocksPanel);
+
+        // Refresh the UI
+        blockListPanel.revalidate();
+        blockListPanel.repaint();
+    }
+
+    private JCheckBox findCheckBox(JPanel blockPanel) {
+        // Find the JCheckBox inside the block panel
+        for (Component component : blockPanel.getComponents()) {
+            if (component instanceof JCheckBox) {
+                return (JCheckBox) component;
+            }
+        }
+        return null;
     }
 
     private void filterBlocks(String query, JPanel blocksPanel) {
@@ -778,18 +832,43 @@ public class UI {
         blockPanel.setLayout(new BoxLayout(blockPanel, BoxLayout.X_AXIS));
 
         // Create the checkbox for the block
-        JCheckBox checkBox = new JCheckBox(block.name, block.allowed);
-        checkBox.addActionListener(e -> {
-            block.allowed = checkBox.isSelected();
-        });
+        JCheckBox checkBox = new JCheckBox();
+        checkBox.setSelected(block.allowed);
+        checkBox.addActionListener(e -> block.allowed = checkBox.isSelected());
+
+        // Create a label for the block name
+        JLabel nameLabel = new JLabel(block.name);
 
         // Create an icon from the block's image
         ImageIcon blockIcon = new ImageIcon(block.image); // Assuming ImageInfo has an Image
         JLabel iconLabel = new JLabel(blockIcon);
 
-        // Add the icon and checkbox to the block panel
-        blockPanel.add(iconLabel);
-        blockPanel.add(checkBox);
+        // Create a small colored square for the average color
+        JPanel colorSquare = new JPanel();
+        colorSquare.setBackground(block.averageColor); // Assuming block.averageColor is a java.awt.Color
+        colorSquare.setMaximumSize(new Dimension(20, 20)); // Adjust size as needed
+        colorSquare.setBorder(new LineBorder(UIManager.getColor("Panel.borderColor"), 1));  // Black outline with thickness of 1
+
+        // Create a label for the "Average:" text
+        JLabel averageLabel = new JLabel(", ");
+
+        // Create a label for the hex color of the block
+        String hexColor = String.format("#%02x%02x%02x",
+                block.averageColor.getRed(),
+                block.averageColor.getGreen(),
+                block.averageColor.getBlue());
+        JLabel hexColorLabel = new JLabel(hexColor);
+
+        // Add the components to the block panel
+        blockPanel.add(iconLabel);                 // Block image
+        blockPanel.add(Box.createHorizontalStrut(5)); // Spacing
+        blockPanel.add(checkBox);                  // Checkbox
+        blockPanel.add(Box.createHorizontalStrut(5)); // Spacing
+        blockPanel.add(nameLabel);                 // Block name
+        blockPanel.add(averageLabel);              // "Average:" text
+        blockPanel.add(colorSquare);               // Color square
+        blockPanel.add(Box.createHorizontalStrut(5)); // Spacing
+        blockPanel.add(hexColorLabel);             // Hex color label
 
         return blockPanel;
     }

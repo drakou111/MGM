@@ -21,20 +21,26 @@ public class ImageInfo {
     }
 
     private void calculateColors() {
-        int totalPixels = image.getWidth() * image.getHeight();
-        long sumR = 0, sumG = 0, sumB = 0;
+        //int totalPixels = image.getWidth() * image.getHeight();
+        float sumR = 0, sumG = 0, sumB = 0;
         int maxR = 0, maxG = 0, maxB = 0;
         int minR = 255, minG = 255, minB = 255;
+
+        float totalPixels = 1f;
 
         // Iterate through each pixel in the image
         for (int x = 0; x < image.getWidth(); x++) {
             for (int y = 0; y < image.getHeight(); y++) {
-                Color pixelColor = new Color(image.getRGB(x, y));
+                Color pixelColor = new Color(image.getRGB(x, y), true);
+
+                // Care less the more alpha the pixel is.
+                float alphaMult = pixelColor.getAlpha() / 255f;
+                totalPixels += alphaMult;
 
                 // Accumulate the RGB values for average calculation
-                sumR += pixelColor.getRed();
-                sumG += pixelColor.getGreen();
-                sumB += pixelColor.getBlue();
+                sumR += pixelColor.getRed() * alphaMult;
+                sumG += pixelColor.getGreen() * alphaMult;
+                sumB += pixelColor.getBlue() * alphaMult;
 
                 // Calculate the max RGB values
                 maxR = Math.max(maxR, pixelColor.getRed());
@@ -49,7 +55,7 @@ public class ImageInfo {
         }
 
         // Calculate the average color
-        averageColor = new Color((int)(sumR / totalPixels), (int)(sumG / totalPixels), (int)(sumB / totalPixels));
+        averageColor = new Color((int)(sumR / totalPixels), (int)(sumG / totalPixels), (int)(sumB / totalPixels), 255);
 
         // Set the max and min colors
         maxColor = new Color(maxR, maxG, maxB);

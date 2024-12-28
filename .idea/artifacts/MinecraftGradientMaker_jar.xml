@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MinecraftGradientMaker:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/MinecraftGradientMaker_jar</output-path>
+    <root id="archive" name="MinecraftGradientMaker.jar">
+      <element id="module-output" name="MinecraftGradientMaker" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/formdev/flatlaf/2.0/flatlaf-2.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
